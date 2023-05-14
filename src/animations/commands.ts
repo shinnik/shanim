@@ -30,15 +30,15 @@ export class BackgroundColorChange extends AnimationCommand {
 
 export class TranslateX extends AnimationCommand {
     keyframes: Keyframe[] = [
-        { transform: `translateX(${this.fromTo.from})` },
-        { transform: `translateX(${this.fromTo.to})` },
+        { transform: `translateX(${this.fromTo.from}px)` },
+        { transform: `translateX(${this.fromTo.to}px)` },
     ];
 }
 
 export class TranslateY extends AnimationCommand {
     keyframes: Keyframe[] = [
-        { transform: `translateY(${this.fromTo.from})` },
-        { transform: `translateY(${this.fromTo.to})` },
+        { transform: `translateY(${this.fromTo.from}px)` },
+        { transform: `translateY(${this.fromTo.to}px)` },
     ];
 }
 

@@ -1,9 +1,8 @@
-export function setupCounter(element: HTMLButtonElement) {
-  let counter = 0
-  const setCounter = (count: number) => {
-    counter = count
-    element.innerHTML = `count is ${counter}`
-  }
-  element.addEventListener('click', () => setCounter(counter + 1))
-  setCounter(0)
+import { TranslateX, TranslateY } from "./animations/commands";
+import { AnimationEngine } from "./animations/engine";
+
+export function startAnimation(element: HTMLElement) {
+    const animation = new AnimationEngine(element);
+
+    animation.apply(new TranslateX({ from: 0, to: 100 }));
 }
