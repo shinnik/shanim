@@ -1,24 +1,24 @@
 import "./style.css";
 import typescriptLogo from "./typescript.svg";
 import viteLogo from "/vite.svg";
-import { startAnimation } from "./counter";
+import { createAnimation, startAnimation } from "./counter";
 
 document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
   <div>
-    <a href="https://vitejs.dev" target="_blank">
-      <img src="${viteLogo}" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://www.typescriptlang.org/" target="_blank">
-      <img src="${typescriptLogo}" class="logo vanilla" alt="TypeScript logo" />
-    </a>
-    <h1>Vite + TypeScript</h1>
+    <h1>Test animation</h1>
     <div class="card">
-      <button id="counter" type="button"></button>
+      <button id="counter" type="button">Click to animate</button>
     </div>
-    <p class="read-the-docs">
-      Click on the Vite and TypeScript logos to learn more
-    </p>
   </div>
 `;
 
-startAnimation(document.querySelector<HTMLButtonElement>("#counter")!);
+const scene = createAnimation(
+    document.querySelector<HTMLButtonElement>("#counter")
+);
+
+document
+    .querySelector<HTMLButtonElement>("#counter")
+    .addEventListener("click", function () {
+        console.log(scene);
+        scene.play();
+    });

@@ -1,67 +1,119 @@
-export abstract class AnimationCommand {
-    abstract keyframes: Keyframe[];
+import { AnimationCommand } from "./commands";
 
-    static defaultEffectTiming: EffectTiming = {
-        delay: 0,
-        duration: 300,
-        iterations: 1,
-        fill: "both",
-        easing: "ease-in",
-    };
+abstract class BasicStep {
+    protected element: HTMLElement;
 
-    fromTo: { from: string | number; to: string | number };
-    options?: EffectTiming = AnimationCommand.defaultEffectTiming;
-
-    constructor(
-        fromTo: { from: string | number; to: string | number },
-        options?: EffectTiming
-    ) {
-        this.options = options;
-        this.fromTo = fromTo;
-    }
-
-    execute(element: HTMLElement, overrideOptions?: EffectTiming): Animation {
-        /** animations own options prevail over common options
-         * and both of them prevail over default settings */
-        return element.animate(this.keyframes, {
-            ...AnimationCommand.defaultEffectTiming,
-            ...overrideOptions,
-            ...this.options,
-        });
-    }
-}
-
-/**
- * It's desirable to describe animations as commands
- * and be able to make chains of several ones. Also, it would be great
- * to have a choice between sequential and simultaneous applying.
- */
-export class AnimationEngine {
-    constructor(private element: HTMLElement) {
+    constructor(element: HTMLElement) {
         this.element = element;
     }
 
-    apply(animation: AnimationCommand, commonSettings?: EffectTiming) {
-        return animation.execute(this.element, commonSettings);
+    abstract play(): Promise<void>;
+}
+
+/** View for client code */
+export class Scene {
+    protected element: HTMLElement;
+    private history: BasicStep[];
+
+    constructor(element: HTMLElement, history: BasicStep[] = []) {
+        this.element = element;
+        this.history = history;
     }
 
-    chain(animations: AnimationCommand[], commonSettings?: EffectTiming) {
-        return animations.reduce((acc, nextAnimationCommand) => {
-            return acc.then(
-                () =>
-                    nextAnimationCommand.execute(this.element, commonSettings)
-                        .finished
-            );
-        }, Promise.resolve());
+    run(transform: (el: HTMLElement) => BasicStep): Scene {
+        const nextStep = transform(this.element);
+        return new Scene(this.element, [...this.history, nextStep]);
     }
 
-    together(animations: AnimationCommand[], commonSettings?: EffectTiming) {
-        return Promise.all(
-            animations.map(
-                (animationCommand) =>
-                    animationCommand.execute(this.element, commonSettings)
-                        .finished
+    async play(): Promise<void> {
+        for (let step of this.history) {
+            await step.play();
+        }
+    }
+
+    apply(cm: AnimationCommand, options?: EffectTiming): Scene {
+        return this.run((el) => new SimpleStep(el, cm));
+    }
+
+    chain(cms: AnimationCommand[], options?: EffectTiming): Scene {
+        return this.run((el) => new ChainStep(el, cms));
+    }
+
+    together(cms: AnimationCommand[], options?: EffectTiming): Scene {
+        return this.run((el) => new TogetherStep(el, cms));
+    }
+}
+
+class ChainStep extends BasicStep {
+    isFinished = false;
+    error: any = null;
+    commands: AnimationCommand[];
+    animations: Animation[];
+    // effectiveAnimations: Animation[]
+
+    constructor(element: HTMLElement, cms: AnimationCommand[]) {
+        super(element);
+        this.commands = cms;
+    }
+
+    async replay(): Promise<void> {
+        this.animations.forEach((animation) => animation.play());
+    }
+
+    async play(): Promise<void> {
+        if (this.isFinished) {
+            return this.replay();
+        }
+
+        try {
+            await this.commands.reduce((acc, nextCommand) => {
+                const animation = nextCommand.execute(
+                    this.element /*commonSettings*/
+                );
+                this.animations.push(animation);
+                return acc.then(() => animation.finished);
+            }, Promise.resolve());
+
+            this.isFinished = true;
+        } catch (error) {
+            this.error = error;
+        }
+    }
+}
+
+class TogetherStep extends BasicStep {
+    commands: AnimationCommand[];
+
+    constructor(element: HTMLElement, cms: AnimationCommand[]) {
+        super(element);
+        this.commands = cms;
+    }
+
+    async play(): Promise<void> {
+        console.log("together started");
+        await Promise.all(
+            this.commands.map(
+                (command) =>
+                    command.execute(this.element /*commonSettings*/).finished
             )
         );
+        console.log("together finished");
     }
+}
+
+class SimpleStep extends BasicStep {
+    command: AnimationCommand;
+
+    constructor(element: HTMLElement, cm: AnimationCommand) {
+        super(element);
+        this.command = cm;
+    }
+
+    async play(): Promise<void> {
+        await this.command.execute(this.element).finished;
+    }
+}
+
+export function createScene(element: HTMLElement) {
+    return new Scene(element);
 }

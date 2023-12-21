@@ -1,4 +1,35 @@
-import { AnimationCommand } from "./engine";
+export abstract class AnimationCommand {
+    abstract keyframes: Keyframe[];
+
+    static defaultEffectTiming: EffectTiming = {
+        delay: 0,
+        duration: 300,
+        iterations: 1,
+        fill: "both",
+        easing: "ease-in",
+    };
+
+    fromTo: { from: string | number; to: string | number };
+    options: EffectTiming = AnimationCommand.defaultEffectTiming;
+
+    constructor(
+        fromTo: { from: string | number; to: string | number },
+        options?: EffectTiming
+    ) {
+        this.options = options;
+        this.fromTo = fromTo;
+    }
+
+    execute(element: HTMLElement, overrideOptions?: EffectTiming): Animation {
+        /** animation's own options prevail over common options
+         * and both of them prevail over default settings */
+        return element.animate(this.keyframes, {
+            ...AnimationCommand.defaultEffectTiming,
+            ...overrideOptions,
+            ...this.options,
+        });
+    }
+}
 
 export class Fade extends AnimationCommand {
     keyframes: Keyframe[] = [
@@ -30,15 +61,15 @@ export class BackgroundColorChange extends AnimationCommand {
 
 export class TranslateX extends AnimationCommand {
     keyframes: Keyframe[] = [
-        { transform: `translateX(${this.fromTo.from}px)` },
-        { transform: `translateX(${this.fromTo.to}px)` },
+        { transform: `translateX(${this.fromTo.from})` },
+        { transform: `translateX(${this.fromTo.to})` },
     ];
 }
 
 export class TranslateY extends AnimationCommand {
     keyframes: Keyframe[] = [
-        { transform: `translateY(${this.fromTo.from}px)` },
-        { transform: `translateY(${this.fromTo.to}px)` },
+        { transform: `translateY(${this.fromTo.from})` },
+        { transform: `translateY(${this.fromTo.to})` },
     ];
 }
 
