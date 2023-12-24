@@ -1,19 +1,72 @@
 import { AnimationCommand } from "./commands";
 
 abstract class BasicStep {
+    protected commands: AnimationCommand[];
     protected element: HTMLElement;
+    protected animationsInPlay: Set<Animation> = new Set();
+
+    static CLEANUP_EVENTS = ["finish", "remove", "cancel"];
 
     constructor(element: HTMLElement) {
         this.element = element;
     }
 
     abstract play(): Promise<void>;
+
+    private release(animation: Animation) {
+        this.animationsInPlay.delete(animation);
+        BasicStep.CLEANUP_EVENTS.forEach((eventName) =>
+            animation.removeEventListener(
+                eventName,
+                this.release.bind(this, animation)
+            )
+        );
+    }
+
+    execute(
+        command: AnimationCommand,
+        element: HTMLElement,
+        options?: EffectTiming
+    ): Animation {
+        const animation = command.execute(element, options);
+        this.animationsInPlay.add(animation);
+        BasicStep.CLEANUP_EVENTS.forEach((eventName) =>
+            animation.addEventListener(
+                eventName,
+                this.release.bind(this, animation)
+            )
+        );
+
+        animation.addEventListener("finish", () => {
+            animation.commitStyles();
+        });
+        return animation;
+    }
+
+    pause() {
+        if (!this.animationsInPlay.size) {
+            return;
+        }
+
+        this.animationsInPlay.forEach((animation) => animation.pause());
+    }
+
+    resume() {
+        if (!this.animationsInPlay.size) {
+            return;
+        }
+
+        this.animationsInPlay.forEach((animation) => animation.play());
+    }
 }
+
+// class Player {}
 
 /** View for client code */
 export class Scene {
     protected element: HTMLElement;
     private history: BasicStep[];
+    private currentStep: BasicStep = null;
 
     constructor(element: HTMLElement, history: BasicStep[] = []) {
         this.element = element;
@@ -27,8 +80,17 @@ export class Scene {
 
     async play(): Promise<void> {
         for (let step of this.history) {
+            this.currentStep = step;
             await step.play();
         }
+    }
+
+    async pause(): Promise<void> {
+        this.currentStep.pause();
+    }
+
+    async resume(): Promise<void> {
+        this.currentStep.resume();
     }
 
     apply(cm: AnimationCommand, options?: EffectTiming): Scene {
@@ -45,72 +107,45 @@ export class Scene {
 }
 
 class ChainStep extends BasicStep {
-    isFinished = false;
-    error: any = null;
-    commands: AnimationCommand[];
-    animations: Animation[];
-    // effectiveAnimations: Animation[]
-
     constructor(element: HTMLElement, cms: AnimationCommand[]) {
         super(element);
         this.commands = cms;
     }
 
-    async replay(): Promise<void> {
-        this.animations.forEach((animation) => animation.play());
-    }
-
     async play(): Promise<void> {
-        if (this.isFinished) {
-            return this.replay();
-        }
-
-        try {
-            await this.commands.reduce((acc, nextCommand) => {
-                const animation = nextCommand.execute(
-                    this.element /*commonSettings*/
-                );
-                this.animations.push(animation);
-                return acc.then(() => animation.finished);
-            }, Promise.resolve());
-
-            this.isFinished = true;
-        } catch (error) {
-            this.error = error;
-        }
+        this.commands.reduce((acc, nextCommand) => {
+            return acc.then(
+                () => this.execute(nextCommand, this.element).finished
+            );
+        }, Promise.resolve());
     }
 }
 
 class TogetherStep extends BasicStep {
-    commands: AnimationCommand[];
-
     constructor(element: HTMLElement, cms: AnimationCommand[]) {
         super(element);
         this.commands = cms;
     }
 
     async play(): Promise<void> {
-        console.log("together started");
         await Promise.all(
             this.commands.map(
                 (command) =>
-                    command.execute(this.element /*commonSettings*/).finished
+                    this.execute(command, this.element /*commonSettings*/)
+                        .finished
             )
         );
-        console.log("together finished");
     }
 }
 
 class SimpleStep extends BasicStep {
-    command: AnimationCommand;
-
     constructor(element: HTMLElement, cm: AnimationCommand) {
         super(element);
-        this.command = cm;
+        this.commands = [cm];
     }
 
     async play(): Promise<void> {
-        await this.command.execute(this.element).finished;
+        await this.execute(this.commands[0], this.element).finished;
     }
 }
 

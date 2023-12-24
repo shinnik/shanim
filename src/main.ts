@@ -19,6 +19,13 @@ const scene = createAnimation(
 document
     .querySelector<HTMLButtonElement>("#counter")
     .addEventListener("click", function () {
-        console.log(scene);
         scene.play();
     });
+
+document.addEventListener("keydown", function (event) {
+    if (event.key === "r") {
+        scene.resume();
+    } else if (event.key === "s") {
+        scene.pause();
+    }
+});
