@@ -30,6 +30,7 @@ abstract class BasicStep {
     ): Animation {
         const animation = command.execute(element, options);
         this.animationsInPlay.add(animation);
+
         BasicStep.CLEANUP_EVENTS.forEach((eventName) =>
             animation.addEventListener(
                 eventName,
@@ -37,9 +38,10 @@ abstract class BasicStep {
             )
         );
 
-        animation.addEventListener("finish", () => {
-            animation.commitStyles();
+        animation.finished.then((a) => {
+            a.commitStyles();
         });
+
         return animation;
     }
 

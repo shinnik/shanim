@@ -1,7 +1,5 @@
 import "./style.css";
-import typescriptLogo from "./typescript.svg";
-import viteLogo from "/vite.svg";
-import { createAnimation, startAnimation } from "./counter";
+import { createAnimation } from "./counter";
 
 document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
   <div>
@@ -27,5 +25,7 @@ document.addEventListener("keydown", function (event) {
         scene.resume();
     } else if (event.key === "s") {
         scene.pause();
+    } else if (event.key === "g") {
+        console.log(scene);
     }
 });
