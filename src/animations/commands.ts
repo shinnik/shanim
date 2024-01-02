@@ -1,4 +1,5 @@
 import { kebabize } from "../utils/kebabize";
+
 type StringPropertiesOnly<T> = {
     [P in keyof T as P extends string ? P : never]: T[P];
 };
