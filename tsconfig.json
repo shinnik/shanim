@@ -2,7 +2,7 @@
   "compilerOptions": {
     "module": "es2015",
     "target": "es6",
-    "lib": ["ES2015", "DOM", "DOM.Iterable"],
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "noImplicitAny": true,
     "removeComments": true,
     "preserveConstEnums": true,

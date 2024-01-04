@@ -2,6 +2,7 @@ import {
     BackgroundColorChange,
     ChangeFont,
     Fade,
+    Rotate,
     Translate,
 } from "./animations/commands";
 import { Scene, createScene } from "./animations/engine";
@@ -21,7 +22,8 @@ export function createAnimation(element: HTMLElement) {
                 { to: "0, -160%" },
                 { duration: 300, easing: "ease-out" }
             ),
-            new Fade({ to: 0 }),
+            new Rotate({ to: "360deg" }),
+            new Fade({ to: 0 }, { delay: 0.9 }),
             new Fade({ to: 1 }),
         ]);
 }

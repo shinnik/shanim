@@ -1,6 +1,6 @@
 import { beforeAll, expect, test, it, describe } from "vitest";
 
-import { createScene, Scene } from "../src/animations/engine";
+import { createScene, Scene } from "../../src/animations/engine";
 
 describe("Scene", () => {
     let div: HTMLDivElement;
