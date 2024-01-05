@@ -2,12 +2,17 @@ import { kebabize } from "../utils/kebabize";
 import { retrieveValueFromTemplate } from "../utils/templateToRegexp";
 
 type StringPropertiesOnly<T> = {
-    [P in keyof T as P extends string ? P : never]: T[P];
+    [P in keyof T as P extends string
+        ? T[P] extends string | number
+            ? P
+            : never
+        : never]: T[P];
 };
 
-type Keyword = keyof StringPropertiesOnly<ElementCSSInlineStyle["style"]>;
-
-type FromTo = { from?: string | number; to: string | number };
+type Keyword = Exclude<
+    keyof StringPropertiesOnly<ElementCSSInlineStyle["style"]>,
+    "length" | "parentRule"
+>;
 
 // Keywords that should be combined (e.g transform: "translateX(10px) rotate(20deg)")
 const COMBINE_KEYWORDS = ["transform"];
@@ -28,12 +33,17 @@ export abstract class AnimationCommand {
         easing: "ease-in",
     };
 
-    fromTo: FromTo;
+    values: string[];
     options: EffectTiming = AnimationCommand.defaultEffectTiming;
 
-    constructor(fromTo: FromTo, options?: EffectTiming) {
+    constructor(
+        values: string | number | (string | number)[],
+        options?: EffectTiming
+    ) {
         this.options = options;
-        this.fromTo = fromTo;
+        this.values = Array.isArray(values)
+            ? values.map((v) => v.toString())
+            : [values.toString()];
     }
 
     private findInitialCSSValue(element: HTMLElement): string {
@@ -45,67 +55,69 @@ export abstract class AnimationCommand {
         );
     }
 
-    private getFromKeyframe(element: HTMLElement): string {
-        if (typeof this.fromTo.from === "undefined") {
-            // try to find current style value to make it previous
-            this.fromTo.from = this.findInitialCSSValue(element);
-            return this.fromTo.from;
+    private getNextKeyframeForCombinedStyles(
+        element: HTMLElement,
+        source: string
+    ) {
+        const styleString = element.style[this.keyword].toString();
+
+        if (source === "") {
+            return styleString;
         }
 
-        return this.template.replace("$", this.fromTo.from.toString());
-    }
+        if (styleString === "") {
+            return this.template.replace("$", source);
+        }
 
-    private getNextKeyframeForCombinedStyles(element: HTMLElement) {
-        const styleString = element.style[this.keyword].toString();
         const valueForThisTemplate = retrieveValueFromTemplate(
             styleString,
             this.template
         );
 
-        if (styleString === "") {
-            return this.template.replace("$", this.fromTo.to.toString());
-        }
-
         if (valueForThisTemplate === "") {
-            return `${styleString} ${this.template.replace(
-                "$",
-                this.fromTo.to.toString()
-            )}`;
+            return `${styleString} ${this.template.replace("$", source)}`;
         } else {
-            return styleString.replace(
-                valueForThisTemplate,
-                this.fromTo.to.toString()
-            );
+            return styleString.replace(valueForThisTemplate, source);
         }
     }
 
-    private getToKeyframe(element: HTMLElement): string {
+    private getKeyframe(element: HTMLElement, source: string) {
         if (COMBINE_KEYWORDS.includes(this.keyword)) {
-            return this.getNextKeyframeForCombinedStyles(element);
+            return this.getNextKeyframeForCombinedStyles(element, source);
         }
 
-        return this.template.replace("$", this.fromTo.to.toString());
+        return this.template.replace("$", source);
     }
 
     private getKeyframes(element: HTMLElement): Keyframe[] {
         if (this.keyframes.length === 0) {
+            const startValue = retrieveValueFromTemplate(
+                this.findInitialCSSValue(element),
+                this.template
+            );
+
+            // add current style value as first keyframe
+            if (startValue !== this.values[0]) {
+                this.keyframes = [
+                    { [this.keyword]: this.getKeyframe(element, startValue) },
+                ];
+            }
+
             this.keyframes = [
-                { [this.keyword]: this.getFromKeyframe(element) },
-                { [this.keyword]: this.getToKeyframe(element) },
+                ...this.keyframes,
+                ...this.values.map((val) => ({
+                    [this.keyword]: this.getKeyframe(element, val),
+                })),
             ];
         }
 
+        console.log(this.keyframes);
         return this.keyframes;
     }
 
     execute(element: HTMLElement, overrideOptions?: EffectTiming): Animation {
         /** animation's own options prevail over common options
          * and both of them prevail over default settings */
-        console.log({
-            ...AnimationCommand.defaultEffectTiming,
-            ...overrideOptions,
-            ...this.options,
-        });
         return element.animate(this.getKeyframes(element), {
             ...AnimationCommand.defaultEffectTiming,
             ...overrideOptions,
