@@ -1,4 +1,4 @@
-import { beforeAll, expect, test, it, describe } from "vitest";
+import { beforeAll, expect, it, describe } from "vitest";
 
 import { createScene, Scene } from "../../src/animations/engine";
 

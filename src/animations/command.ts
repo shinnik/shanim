@@ -20,7 +20,7 @@ export class AnimationCommand {
 
     static requiredEffectTiming: EffectTiming = {
         // It's required, because we rely on previously committed styles
-        // If "fill" will be none or auto, then there would be two potential issues:
+        // If "fill" would be none or auto, then there would be two potential issues:
         // 1. Problem with animation removing
         // 2. Styles can not be committed on animation finish
         fill: "both",

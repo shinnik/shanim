@@ -5,7 +5,7 @@ import {
     rotate,
     translate,
 } from "./animations/commands";
-import { Scene, createScene } from "./animations/engine";
+import { createScene } from "./animations/engine";
 
 export function createAnimation(element: HTMLElement) {
     return createScene(element)
