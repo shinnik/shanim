@@ -10,9 +10,4 @@ describe("Scene", () => {
     it("can be created", () => {
         expect(createScene(div) instanceof Scene).toBe(true);
     });
-
-    it("can be chained", () => {
-        const scene = createScene(div);
-        // scene.chain(fade(0, 0.5, 1), translate("0, -80%"))
-    });
 });

@@ -1,26 +1,32 @@
 import {
-    BackgroundColorChange,
-    ChangeFont,
-    Fade,
-    Rotate,
-    Translate,
+    backgroundColor,
+    fade,
+    fontSize,
+    rotate,
+    translate,
 } from "./animations/commands";
 import { Scene, createScene } from "./animations/engine";
 
 export function createAnimation(element: HTMLElement) {
     return createScene(element)
         .together([
-            new ChangeFont([10, 20, 30], { duration: 300, easing: "ease-out" }),
-            new BackgroundColorChange("#a9029e"),
+            fontSize([10, 20, 50, 30], {
+                duration: 3000,
+                easing: "ease-out",
+            }),
+            backgroundColor("#a9029e"),
         ])
         .chain([
-            new Translate("0, -80%", { duration: 300, easing: "ease-out" }),
-            new Translate("0, -160%", {
+            translate("0, -80%", {
                 duration: 300,
                 easing: "ease-out",
             }),
-            new Rotate("360deg"),
-            new Fade(0, { delay: 0.9 }),
-            new Fade(1),
+            translate("0, -360%", {
+                duration: 300,
+                easing: "ease-out",
+            }),
+            rotate("360deg"),
+            fade(0),
+            fade(1),
         ]);
 }

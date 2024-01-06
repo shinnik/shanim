@@ -1,4 +1,4 @@
-import { AnimationCommand } from "./commands";
+import { AnimationCommand } from "./command";
 
 abstract class BasicStep {
     protected commands: AnimationCommand[];
@@ -6,7 +6,7 @@ abstract class BasicStep {
     protected animationsInPlay: Set<Animation> = new Set();
     protected options?: EffectTiming;
 
-    static CLEANUP_EVENTS = ["finish", "remove", "cancel"];
+    static CLEANUP_EVENTS = ["remove", "cancel"];
 
     constructor(element: HTMLElement, options: EffectTiming) {
         this.element = element;
@@ -25,7 +25,7 @@ abstract class BasicStep {
         );
     }
 
-    execute(
+    protected execute(
         command: AnimationCommand,
         element: HTMLElement,
         options?: EffectTiming
@@ -40,37 +40,32 @@ abstract class BasicStep {
             )
         );
 
-        animation.finished.then((a) => {
-            a.commitStyles();
+        animation.finished.then((anim) => {
+            anim.commitStyles();
         });
 
         return animation;
     }
 
-    pause() {
-        if (!this.animationsInPlay.size) {
-            return;
-        }
+    reset() {
+        this.animationsInPlay.forEach((animation) => animation.cancel());
+    }
 
+    pause() {
         this.animationsInPlay.forEach((animation) => animation.pause());
     }
 
     resume() {
-        if (!this.animationsInPlay.size) {
-            return;
-        }
-
         this.animationsInPlay.forEach((animation) => animation.play());
     }
 }
-
-// class Player {}
 
 /** View for client code */
 export class Scene {
     protected element: HTMLElement;
     private history: BasicStep[];
     private currentStep: BasicStep = null;
+    private initialInlineElementStyles: string = null;
 
     constructor(element: HTMLElement, history: BasicStep[] = []) {
         this.element = element;
@@ -82,7 +77,15 @@ export class Scene {
         return new Scene(this.element, [...this.history, nextStep]);
     }
 
+    private reset() {
+        this.history.forEach((s) => s.reset());
+        // TODO: handle this more accurate using initialInlineElementStyles
+        this.element.removeAttribute("style");
+    }
+
     async play(): Promise<void> {
+        this.reset();
+
         for (let step of this.history) {
             this.currentStep = step;
             await step.play();
@@ -138,7 +141,6 @@ class TogetherStep extends BasicStep {
         options?: EffectTiming
     ) {
         super(element, options);
-
         this.commands = cms;
     }
 
