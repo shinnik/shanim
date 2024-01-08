@@ -1,11 +1,21 @@
 {
-  "name": "anim-proj",
-  "private": true,
-  "version": "0.0.0",
+  "name": "shanim",
   "type": "module",
+  "license": "MIT",
+  "files": [
+    "dist"
+  ],
+  "version": "0.1.0",
+  "main": "./dist/shanim.js",
+  "module": "./dist/shanim.js",
+  "exports": {
+    ".": {
+      "import": "./dist/shanim.js"
+    }
+  },
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
+    "dev": "vite -c ./demo/vite.config.js",
+    "build": "tsc --p ./tsconfig.build.json && vite build",
     "test": "vitest",
     "preview": "vite preview"
   },
@@ -13,6 +23,7 @@
     "happy-dom": "^12.10.3",
     "typescript": "^5.3.2",
     "vite": "^4.3.2",
+    "vite-plugin-dts": "^3.7.0",
     "vitest": "^1.1.1"
   }
 }

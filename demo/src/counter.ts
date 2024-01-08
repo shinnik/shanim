@@ -4,8 +4,8 @@ import {
     fontSize,
     rotate,
     translate,
-} from "./animations/commands";
-import { createScene } from "./animations/engine";
+} from "../../lib/animation/commands";
+import { createScene } from "../../lib/animation/engine";
 
 export function createAnimation(element: HTMLElement) {
     return createScene(element)

@@ -7,7 +7,9 @@
     "removeComments": true,
     "preserveConstEnums": true,
     "noErrorTruncation": true,
+    "noEmit": true,
+    "noUncheckedIndexedAccess": true
   },
-  "include": ["src/**/*"],
+  "include": ["lib/**/*", "demo/**/*"],
   "exclude": ["node_modules"]
 }
