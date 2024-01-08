@@ -8,6 +8,7 @@
     "preserveConstEnums": true,
     "noErrorTruncation": true,
     "noEmit": true,
+    "declaration": true,
     "noUncheckedIndexedAccess": true
   },
   "include": ["lib/**/*", "demo/**/*"],

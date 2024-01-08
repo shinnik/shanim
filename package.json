@@ -11,7 +11,7 @@
   "exports": {
     ".": {
       "import": "./dist/shanim.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/shanim.d.ts"
     }
   },
   "scripts": {
