@@ -10,7 +10,8 @@
   "module": "./dist/shanim.js",
   "exports": {
     ".": {
-      "import": "./dist/shanim.js"
+      "import": "./dist/shanim.js",
+      "types": "./dist/index.d.ts"
     }
   },
   "scripts": {
