@@ -18,7 +18,8 @@
     "dev": "vite -c ./demo/vite.config.js",
     "build": "tsc --p ./tsconfig.build.json && vite build",
     "test": "vitest",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "publish-patch": "npm run build && npm version patch && npm publish"
   },
   "devDependencies": {
     "happy-dom": "^12.10.3",
