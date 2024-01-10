@@ -10,7 +10,7 @@
   "files": [
     "dist"
   ],
-  "version": "0.1.6",
+  "version": "0.1.7",
   "main": "./dist/shanim.js",
   "module": "./dist/shanim.js",
   "exports": {
