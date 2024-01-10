@@ -1,6 +1,6 @@
 import { beforeAll, expect, test, it, describe } from "vitest";
 
-import { templateToRegexp } from "../../src/utils/templateToRegexp";
+import { templateToRegexp } from "../../lib/utils/templateToRegexp";
 
 describe("templateToRegexp", () => {
     it("works as expected", () => {
