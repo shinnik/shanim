@@ -2,7 +2,7 @@ import { beforeAll, expect, it, describe } from "vitest";
 
 import { createScene, Scene } from "../../lib/animation/engine";
 
-describe("Scene", () => {
+describe("Scene class", () => {
     let div: HTMLDivElement;
     beforeAll(() => {
         div = document.createElement("div");
