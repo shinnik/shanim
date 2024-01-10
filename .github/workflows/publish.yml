@@ -23,11 +23,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
             node-version: '20.x'
-            registry-url: 'https://npm.pkg.github.com'
+            registry-url: 'https://registry.npmjs.org'
 
       - run: npm ci
-      - run: git config --global user.email "shanim-bot"
+      - run: git config --global user.email "shanim-bot@github.com"
       - run: git config --global user.name "shanim-bot"
       - run: npm run release
         env:
-            NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
