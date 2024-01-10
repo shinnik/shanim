@@ -2,7 +2,7 @@ import { beforeAll, expect, test, it, describe } from "vitest";
 
 import { templateToRegexp } from "../../lib/utils/templateToRegexp";
 
-describe("templateToRegexp", () => {
+describe("templateToRegexp util", () => {
     it("works as expected", () => {
         expect(templateToRegexp("translate($)").source).toBe(
             "translate\\((?<dollar>.*)\\)"
