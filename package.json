@@ -1,6 +1,11 @@
 {
   "name": "shanim",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shinnik/shanim.git"
+  },
+  "description": "Small wrapper for Web Animation API to animate HTMLElements with comfort",
   "license": "MIT",
   "files": [
     "dist"
