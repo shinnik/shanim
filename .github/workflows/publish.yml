@@ -26,6 +26,8 @@ jobs:
             registry-url: 'https://npm.pkg.github.com'
 
       - run: npm ci
+      - run: git config --global user.email "shanim-bot"
+      - run: git config --global user.name "shanim-bot"
       - run: npm run release
         env:
             NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
