@@ -27,7 +27,7 @@
     "preview": "vite preview",
     "lint": "tsc",
     "release": "npm run publish-patch",
-    "publish-patch": "npm run build && npm version patch",
+    "publish-patch": "npm run build && npm version patch && git push",
     "postpublish": "git push"
   },
   "devDependencies": {
