@@ -27,7 +27,7 @@
     "preview": "vite preview",
     "lint": "tsc",
     "release": "npm run publish-patch",
-    "publish-patch": "npm run build && npm version patch"
+    "publish-patch": "npm run build && npm version patch && npm publish && git push"
   },
   "devDependencies": {
     "happy-dom": "^12.10.3",
