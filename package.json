@@ -10,7 +10,7 @@
   "files": [
     "dist"
   ],
-  "version": "0.1.3",
+  "version": "0.1.4",
   "main": "./dist/shanim.js",
   "module": "./dist/shanim.js",
   "exports": {
@@ -27,7 +27,8 @@
     "preview": "vite preview",
     "lint": "tsc",
     "release": "npm run publish-patch",
-    "publish-patch": "npm run build && npm version patch && npm publish && git push"
+    "publish-patch": "npm run build && npm version patch",
+    "postpublish": "git push"
   },
   "devDependencies": {
     "happy-dom": "^12.10.3",
