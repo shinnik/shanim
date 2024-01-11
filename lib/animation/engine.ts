@@ -86,18 +86,10 @@ export class Scene {
     async play(): Promise<void> {
         this.reset();
 
-        return new Promise(async (res, rej) => {
-            try {
-                for (let step of this.history) {
-                    this.currentStep = step;
-                    await step.play();
-                }
-
-                res();
-            } catch (error) {
-                rej(error);
-            }
-        });
+        for (let step of this.history) {
+            this.currentStep = step;
+            await step.play();
+        }
     }
 
     async pause(): Promise<void> {
@@ -132,7 +124,7 @@ class ChainStep extends BasicStep {
     }
 
     async play(): Promise<void> {
-        this.commands.reduce((acc, nextCommand) => {
+        await this.commands.reduce((acc, nextCommand) => {
             return acc.then(
                 () =>
                     this.execute(nextCommand, this.element, this.options)
