@@ -1,5 +1,16 @@
 {
-  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "target": "es6",
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "noImplicitAny": true,
+    "removeComments": true,
+    "preserveConstEnums": true,
+    "noErrorTruncation": true,
+    "noEmit": true,
+    "declaration": true,
+    "noUncheckedIndexedAccess": true
+  },
   "include": ["lib/**/*", "demo/**/*"],
   "exclude": ["node_modules"]
 }
