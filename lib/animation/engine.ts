@@ -86,10 +86,18 @@ export class Scene {
     async play(): Promise<void> {
         this.reset();
 
-        for (let step of this.history) {
-            this.currentStep = step;
-            await step.play();
-        }
+        return new Promise(async (res, rej) => {
+            try {
+                for (let step of this.history) {
+                    this.currentStep = step;
+                    await step.play();
+                }
+
+                res();
+            } catch (error) {
+                rej(error);
+            }
+        });
     }
 
     async pause(): Promise<void> {
