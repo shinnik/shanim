@@ -8,7 +8,7 @@ abstract class BasicStep {
 
     static CLEANUP_EVENTS = ["remove", "cancel"];
 
-    constructor(element: HTMLElement, options: EffectTiming) {
+    constructor(element: HTMLElement, options?: EffectTiming) {
         this.element = element;
         this.options = options;
     }
@@ -70,6 +70,7 @@ export class Scene {
     constructor(element: HTMLElement, history: BasicStep[] = []) {
         this.element = element;
         this.history = history;
+        this.initialInlineElementStyles = element.getAttribute("style");
     }
 
     run(transform: (el: HTMLElement) => BasicStep): Scene {
@@ -79,8 +80,8 @@ export class Scene {
 
     private reset() {
         this.history.forEach((s) => s.reset());
-        // TODO: handle this more accurate using initialInlineElementStyles
-        this.element.removeAttribute("style");
+
+        this.element.setAttribute("style", this.initialInlineElementStyles);
     }
 
     async play(): Promise<void> {
