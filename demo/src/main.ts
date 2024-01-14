@@ -17,7 +17,7 @@ const scene = createAnimation(
 document
     .querySelector<HTMLButtonElement>("#counter")
     .addEventListener("click", function () {
-        scene.play();
+        scene.play({ shouldCommit: false });
     });
 
 document.addEventListener("keydown", function (event) {
@@ -27,5 +27,9 @@ document.addEventListener("keydown", function (event) {
         scene.pause();
     } else if (event.key === "g") {
         console.log(scene);
+    } else if (event.key === "t") {
+        createAnimation(
+            document.querySelector<HTMLButtonElement>("#counter")
+        ).play();
     }
 });

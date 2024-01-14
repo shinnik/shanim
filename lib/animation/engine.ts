@@ -3,7 +3,7 @@ import { AnimationCommand } from "./command";
 abstract class BasicStep {
     protected commands: AnimationCommand[];
     protected element: HTMLElement;
-    protected animationsInPlay: Set<Animation> = new Set();
+    // protected animationsInPlay: Set<Animation> = new Set();
     protected options?: EffectTiming;
 
     static CLEANUP_EVENTS = ["remove", "cancel"];
@@ -15,15 +15,15 @@ abstract class BasicStep {
 
     abstract play(): Promise<void>;
 
-    private release(animation: Animation) {
-        this.animationsInPlay.delete(animation);
-        BasicStep.CLEANUP_EVENTS.forEach((eventName) =>
-            animation.removeEventListener(
-                eventName,
-                this.release.bind(this, animation)
-            )
-        );
-    }
+    // private release(animation: Animation) {
+    //     this.animationsInPlay.delete(animation);
+    //     BasicStep.CLEANUP_EVENTS.forEach((eventName) =>
+    //         animation.removeEventListener(
+    //             eventName,
+    //             this.release.bind(this, animation)
+    //         )
+    //     );
+    // }
 
     protected execute(
         command: AnimationCommand,
@@ -31,32 +31,34 @@ abstract class BasicStep {
         options?: EffectTiming
     ): Animation {
         const animation = command.execute(element, options);
-        this.animationsInPlay.add(animation);
+        // this.animationsInPlay.add(animation);
 
-        BasicStep.CLEANUP_EVENTS.forEach((eventName) =>
-            animation.addEventListener(
-                eventName,
-                this.release.bind(this, animation)
-            )
-        );
+        // BasicStep.CLEANUP_EVENTS.forEach((eventName) =>
+        //     animation.addEventListener(
+        //         eventName,
+        //         this.release.bind(this, animation)
+        //     )
+        // );
 
         animation.finished.then((anim) => {
+            // console.log("BEFORE COMMIT", this.element.getAttribute("style"));
             anim.commitStyles();
+            // console.log("AFTER COMMIT", this.element.getAttribute("style"));
         });
 
         return animation;
     }
 
     reset() {
-        this.animationsInPlay.forEach((animation) => animation.cancel());
+        this.element.getAnimations().forEach((animation) => animation.cancel());
     }
 
     pause() {
-        this.animationsInPlay.forEach((animation) => animation.pause());
+        this.element.getAnimations().forEach((animation) => animation.pause());
     }
 
     resume() {
-        this.animationsInPlay.forEach((animation) => animation.play());
+        this.element.getAnimations().forEach((animation) => animation.play());
     }
 }
 
@@ -73,22 +75,31 @@ export class Scene {
         this.initialInlineElementStyles = element.getAttribute("style");
     }
 
-    run(transform: (el: HTMLElement) => BasicStep): Scene {
-        const nextStep = transform(this.element);
-        return new Scene(this.element, [...this.history, nextStep]);
-    }
-
     private reset() {
         this.history.forEach((s) => s.reset());
-        this.element.setAttribute("style", this.initialInlineElementStyles);
     }
 
-    async play(): Promise<void> {
+    private cleanStyles() {
+        this.initialInlineElementStyles
+            ? this.element.setAttribute(
+                  "style",
+                  this.initialInlineElementStyles
+              )
+            : this.element.removeAttribute("style");
+    }
+
+    async play(
+        options: { shouldCommit?: boolean } = { shouldCommit: false }
+    ): Promise<void> {
         this.reset();
 
         for (let step of this.history) {
             this.currentStep = step;
             await step.play();
+        }
+
+        if (!options.shouldCommit) {
+            this.cleanStyles();
         }
     }
 
@@ -98,6 +109,11 @@ export class Scene {
 
     async resume(): Promise<void> {
         this.currentStep.resume();
+    }
+
+    run(transform: (el: HTMLElement) => BasicStep): Scene {
+        const nextStep = transform(this.element);
+        return new Scene(this.element, [...this.history, nextStep]);
     }
 
     apply(cm: AnimationCommand, options?: EffectTiming): Scene {
