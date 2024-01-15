@@ -43,15 +43,6 @@ export class AnimationCommand {
             : [values.toString()];
     }
 
-    private findInitialCSSValue(element: HTMLElement): string {
-        return (
-            element.style[this.keyword].toString() ||
-            window
-                .getComputedStyle(element)
-                .getPropertyValue(kebabize(this.keyword))
-        );
-    }
-
     private getNextKeyframeForCombinedStyles(
         element: HTMLElement,
         source: string
@@ -87,28 +78,9 @@ export class AnimationCommand {
     }
 
     private createKeyframes(element: HTMLElement) {
-        const startValue = retrieveValueFromTemplate(
-            this.findInitialCSSValue(element),
-            this.template
-        );
-
-        let keyframes = [];
-
-        // add current style value as first keyframe
-        if (startValue !== this.values[0]) {
-            keyframes.push({
-                [this.keyword]: this.getKeyframe(element, startValue),
-            });
-        }
-
-        keyframes = [
-            ...keyframes,
-            ...this.values.map((val) => ({
-                [this.keyword]: this.getKeyframe(element, val),
-            })),
-        ];
-
-        return keyframes;
+        return this.values.map((val) => ({
+            [this.keyword]: this.getKeyframe(element, val),
+        }));
     }
 
     private getKeyframes(element: HTMLElement): Keyframe[] {
