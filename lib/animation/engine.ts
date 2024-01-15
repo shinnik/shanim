@@ -3,7 +3,6 @@ import { AnimationCommand } from "./command";
 abstract class BasicStep {
     protected commands: AnimationCommand[];
     protected element: HTMLElement;
-    // protected animationsInPlay: Set<Animation> = new Set();
     protected options?: EffectTiming;
 
     static CLEANUP_EVENTS = ["remove", "cancel"];
@@ -15,35 +14,15 @@ abstract class BasicStep {
 
     abstract play(): Promise<void>;
 
-    // private release(animation: Animation) {
-    //     this.animationsInPlay.delete(animation);
-    //     BasicStep.CLEANUP_EVENTS.forEach((eventName) =>
-    //         animation.removeEventListener(
-    //             eventName,
-    //             this.release.bind(this, animation)
-    //         )
-    //     );
-    // }
-
     protected execute(
         command: AnimationCommand,
         element: HTMLElement,
         options?: EffectTiming
     ): Animation {
         const animation = command.execute(element, options);
-        // this.animationsInPlay.add(animation);
-
-        // BasicStep.CLEANUP_EVENTS.forEach((eventName) =>
-        //     animation.addEventListener(
-        //         eventName,
-        //         this.release.bind(this, animation)
-        //     )
-        // );
 
         animation.finished.then((anim) => {
-            // console.log("BEFORE COMMIT", this.element.getAttribute("style"));
             anim.commitStyles();
-            // console.log("AFTER COMMIT", this.element.getAttribute("style"));
         });
 
         return animation;
