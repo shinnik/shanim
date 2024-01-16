@@ -26,6 +26,10 @@ export function createAnimation(element: HTMLElement) {
                 easing: "ease-out",
             }),
             rotate("360deg"),
+            translate("0, -540%", {
+                duration: 300,
+                easing: "ease-out",
+            }),
             fade(0),
             fade(1),
         ]);

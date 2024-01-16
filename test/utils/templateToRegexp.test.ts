@@ -5,13 +5,22 @@ import { templateToRegexp } from "../../lib/utils/templateToRegexp";
 describe("templateToRegexp util", () => {
     it("works as expected", () => {
         expect(templateToRegexp("translate($)").source).toBe(
-            "translate\\((?<dollar>.*)\\)"
+            "translate\\((?<dollar>.*?)\\)"
         );
     });
 
     it("extracts dollar sign as a group", () => {
         const regex = templateToRegexp("translate($)");
         const example = "translate(0px, -80%)";
+
+        const { dollar } = regex.exec(example)?.groups || {};
+
+        expect(dollar).toBe("0px, -80%");
+    });
+
+    it("extracts from combined properly", () => {
+        const regex = templateToRegexp("translate($)");
+        const example = "translate(0px, -80%) rotate(360deg)";
 
         const { dollar } = regex.exec(example)?.groups || {};
 

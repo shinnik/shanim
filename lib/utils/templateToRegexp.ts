@@ -11,7 +11,7 @@ export const templateToRegexp = (template: string) => {
                     acc.push("\\(");
                 } else if (char === "$") {
                     acc.push(
-                        `(?<dollar${dollarCount > 0 ? dollarCount : ""}>.*)`
+                        `(?<dollar${dollarCount > 0 ? dollarCount : ""}>.*?)`
                     );
                     dollarCount++;
                 } else {
