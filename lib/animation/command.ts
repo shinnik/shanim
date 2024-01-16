@@ -71,7 +71,6 @@ export class AnimationCommand {
             styleString,
             this.template
         );
-        console.log(valueForThisTemplate, "valueForThisTemplate");
 
         if (valueForThisTemplate === "") {
             return `${styleString} ${this.template.replace("$", source)}`;
@@ -89,24 +88,23 @@ export class AnimationCommand {
     }
 
     private createKeyframes(element: HTMLElement) {
-        // const startValue = retrieveValueFromTemplate(
-        //     this.findInitialCSSValue(element),
-        //     this.template
-        // );
-
-        // console.log(startValue, "startValue");
+        // to replay animation correctly
+        const startValue = retrieveValueFromTemplate(
+            this.findInitialCSSValue(element),
+            this.template
+        );
 
         let keyframes = [];
 
         // add current style value as first keyframe
-        // if (startValue !== this.values[0]) {
-        //     keyframes.push({
-        //         [this.keyword]: this.getKeyframe(element, startValue),
-        //     });
-        // }
+        if (startValue !== this.values[0]) {
+            keyframes.push({
+                [this.keyword]: this.getKeyframe(element, startValue),
+            });
+        }
 
         keyframes = [
-            // ...keyframes,
+            ...keyframes,
             ...this.values.map((val) => ({
                 [this.keyword]: this.getKeyframe(element, val),
             })),
