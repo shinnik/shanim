@@ -55,7 +55,8 @@ export class Scene {
     }
 
     private reset() {
-        this.history.forEach((s) => s.reset());
+        // reverse seems reasonable, because we like going back in time when canceling
+        [...this.history].reverse().forEach((s) => s.reset());
     }
 
     private cleanStyles() {
