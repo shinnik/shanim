@@ -12,3 +12,11 @@ export type Keyword = Exclude<
     keyof StringPropertiesOnly<ElementCSSInlineStyle["style"]>,
     "length" | "parentRule"
 >;
+
+/** Abstraction for command creation */
+export type CommandObject = {
+    values: string | number | (string | number)[];
+    keyword: Keyword;
+    template: string;
+    options?: AllowedEffectTiming;
+};

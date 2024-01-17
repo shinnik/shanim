@@ -1,37 +1,62 @@
 import { AnimationCommand } from "./command";
-import { AllowedEffectTiming } from "./types";
+import { AllowedEffectTiming, CommandObject } from "./types";
 
 export function fade(
     values: string | number | (string | number)[],
     options?: AllowedEffectTiming
-) {
-    return new AnimationCommand(values, "opacity", "$", options);
+): CommandObject {
+    return {
+        values,
+        options,
+        keyword: "opacity",
+        template: "$",
+    };
 }
 
 export function translate(
     values: string | number | (string | number)[],
     options?: AllowedEffectTiming
-) {
-    return new AnimationCommand(values, "transform", "translate($)", options);
+): CommandObject {
+    return {
+        values,
+        options,
+        keyword: "transform",
+        template: "translate($)",
+    };
 }
 
 export function fontSize(
     values: string | number | (string | number)[],
     options?: AllowedEffectTiming
-) {
-    return new AnimationCommand(values, "fontSize", "$px", options);
+): CommandObject {
+    return {
+        values,
+        options,
+        keyword: "fontSize",
+        template: "$px",
+    };
 }
 
 export function backgroundColor(
     values: string | number | (string | number)[],
     options?: AllowedEffectTiming
-) {
-    return new AnimationCommand(values, "backgroundColor", "$", options);
+): CommandObject {
+    return {
+        values,
+        options,
+        keyword: "backgroundColor",
+        template: "$",
+    };
 }
 
 export function rotate(
     values: string | number | (string | number)[],
     options?: AllowedEffectTiming
-) {
-    return new AnimationCommand(values, "transform", "rotate($)", options);
+): CommandObject {
+    return {
+        values,
+        options,
+        keyword: "transform",
+        template: "rotate($)",
+    };
 }
