@@ -6,6 +6,7 @@ abstract class BasicStep {
     protected element: HTMLElement;
     protected options?: EffectTiming;
     protected initialStyleMap?: Record<string, string>;
+    protected animationsInPlay: Set<Animation> = new Set();
 
     static CLEANUP_EVENTS = ["remove", "cancel"];
 
@@ -29,6 +30,16 @@ abstract class BasicStep {
         this.initialStyleMap = this.createInitialStyleMap();
     }
 
+    private release(animation: Animation) {
+        this.animationsInPlay.delete(animation);
+        BasicStep.CLEANUP_EVENTS.forEach((eventName) =>
+            animation.removeEventListener(
+                eventName,
+                this.release.bind(this, animation)
+            )
+        );
+    }
+
     abstract play(): Promise<void>;
 
     protected execute(
@@ -36,6 +47,15 @@ abstract class BasicStep {
         options?: EffectTiming
     ): Animation {
         const animation = command.execute(options);
+
+        this.animationsInPlay.add(animation);
+
+        BasicStep.CLEANUP_EVENTS.forEach((eventName) =>
+            animation.addEventListener(
+                eventName,
+                this.release.bind(this, animation)
+            )
+        );
 
         animation.finished.then((anim) => {
             anim.commitStyles();
@@ -54,20 +74,12 @@ abstract class BasicStep {
         }, {});
     }
 
-    init() {
-        this.commands.forEach((command) => command);
-    }
-
-    reset() {
-        this.element.getAnimations().forEach((animation) => animation.cancel());
-    }
-
     pause() {
-        this.element.getAnimations().forEach((animation) => animation.pause());
+        this.animationsInPlay.forEach((animation) => animation.pause());
     }
 
     resume() {
-        this.element.getAnimations().forEach((animation) => animation.play());
+        this.animationsInPlay.forEach((animation) => animation.play());
     }
 }
 
@@ -85,8 +97,10 @@ export class Scene {
     }
 
     private reset() {
-        // reverse seems reasonable, because we like going back in time when canceling
-        [...this.history].reverse().forEach((s) => s.reset());
+        const anims = this.element.getAnimations();
+        if (anims.length) {
+            anims.forEach((animation) => animation.cancel());
+        }
     }
 
     private cleanStyles() {
@@ -118,6 +132,7 @@ export class Scene {
     }
 
     async resume(): Promise<void> {
+        console.log(this.currentStep);
         this.currentStep.resume();
     }
 
@@ -146,6 +161,7 @@ class ChainStep extends BasicStep {
         options?: EffectTiming
     ) {
         super(element, cms, options);
+        window["animationsInPlay1"] = this.animationsInPlay;
     }
 
     async play(): Promise<void> {
@@ -164,6 +180,7 @@ class TogetherStep extends BasicStep {
         options?: EffectTiming
     ) {
         super(element, cms, options);
+        window["animationsInPlay2"] = this.animationsInPlay;
     }
 
     async play(): Promise<void> {
