@@ -1,4 +1,3 @@
-import { AnimationCommand } from "./command";
 import { AllowedEffectTiming, CommandObject } from "./types";
 
 export function fade(
@@ -6,7 +5,7 @@ export function fade(
     options?: AllowedEffectTiming
 ): CommandObject {
     return {
-        values,
+        values: normalizeValues(values),
         options,
         keyword: "opacity",
         template: "$",
@@ -18,7 +17,7 @@ export function translate(
     options?: AllowedEffectTiming
 ): CommandObject {
     return {
-        values,
+        values: normalizeValues(values),
         options,
         keyword: "transform",
         template: "translate($)",
@@ -30,7 +29,7 @@ export function fontSize(
     options?: AllowedEffectTiming
 ): CommandObject {
     return {
-        values,
+        values: normalizeValues(values),
         options,
         keyword: "fontSize",
         template: "$px",
@@ -42,7 +41,7 @@ export function backgroundColor(
     options?: AllowedEffectTiming
 ): CommandObject {
     return {
-        values,
+        values: normalizeValues(values),
         options,
         keyword: "backgroundColor",
         template: "$",
@@ -54,9 +53,15 @@ export function rotate(
     options?: AllowedEffectTiming
 ): CommandObject {
     return {
-        values,
+        values: normalizeValues(values),
         options,
         keyword: "transform",
         template: "rotate($)",
     };
+}
+
+function normalizeValues(
+    values: string | number | (string | number)[]
+): (string | number)[] {
+    return Array.isArray(values) ? values : [values];
 }

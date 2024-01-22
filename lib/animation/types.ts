@@ -15,7 +15,7 @@ export type Keyword = Exclude<
 
 /** Abstraction for command creation */
 export type CommandObject = {
-    values: string | number | (string | number)[];
+    values: (string | number)[];
     keyword: Keyword;
     template: string;
     options?: AllowedEffectTiming;

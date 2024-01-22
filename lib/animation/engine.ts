@@ -1,3 +1,5 @@
+import { kebabize } from "../utils/kebabize";
+import { retrieveValueFromTemplate } from "../utils/templateToRegexp";
 import { AnimationCommand } from "./command";
 import { CommandObject } from "./types";
 
@@ -5,8 +7,10 @@ abstract class BasicStep {
     protected commands: AnimationCommand[];
     protected element: HTMLElement;
     protected options?: EffectTiming;
-    protected initialStyleMap?: Record<string, string>;
+    // protected initialStyleMap?: Record<string, string>;
     protected animationsInPlay: Set<Animation> = new Set();
+
+    public TESTcmsObjects: CommandObject[];
 
     static CLEANUP_EVENTS = ["remove", "cancel"];
 
@@ -15,6 +19,8 @@ abstract class BasicStep {
         commands: CommandObject[],
         options?: EffectTiming
     ) {
+        this.TESTcmsObjects = commands;
+        console.log(commands, "COMMaNDS IN STEP");
         this.element = element;
         this.options = options;
         this.commands = commands.map(
@@ -27,7 +33,6 @@ abstract class BasicStep {
                     data.options
                 )
         );
-        this.initialStyleMap = this.createInitialStyleMap();
     }
 
     private release(animation: Animation) {
@@ -64,16 +69,6 @@ abstract class BasicStep {
         return animation;
     }
 
-    private createInitialStyleMap() {
-        return this.commands.reduce<Record<string, string>>((acc, next) => {
-            const { keyword, template, keyframes } = next.getInfo();
-            const uniqKey = `${keyword}_${template}`;
-            console.log(keyframes);
-            // acc[uniqKey] = keyframes[0][keyword] as string;
-            return acc;
-        }, {});
-    }
-
     pause() {
         this.animationsInPlay.forEach((animation) => animation.pause());
     }
@@ -89,17 +84,19 @@ export class Scene {
     private history: BasicStep[];
     private currentStep: BasicStep = null;
     private initialInlineElementStyles: string = null;
+    TESTCommandObjects: CommandObject[];
 
     constructor(element: HTMLElement, history: BasicStep[] = []) {
         this.element = element;
         this.history = history;
         this.initialInlineElementStyles = element.getAttribute("style");
+        // this.TESTCommandObjects = this.addStartValue();
     }
 
     private reset() {
-        const anims = this.element.getAnimations();
-        if (anims.length) {
-            anims.forEach((animation) => animation.cancel());
+        const animations = this.element.getAnimations();
+        if (animations.length > 0) {
+            animations.forEach((animation) => animation.cancel());
         }
     }
 
@@ -110,6 +107,82 @@ export class Scene {
                   this.initialInlineElementStyles
               )
             : this.element.removeAttribute("style");
+    }
+
+    addStartValue(targetArr: CommandObject[]) {
+        const referenceObjs = this.history.flatMap((s) => s.TESTcmsObjects);
+
+        const createMap = () => {
+            const map: Record<string, string | number> = {}; // store last values for each keyword_template key
+
+            referenceObjs.forEach(({ keyword, template, values }) => {
+                const key = `${keyword}_${template}`;
+                map[key] = values[values.length - 1];
+            });
+
+            return map;
+        };
+
+        const map = createMap();
+
+        const result = targetArr.map(
+            ({ keyword, template, values, ...rest }) => {
+                const key = `${keyword}_${template}`;
+                const startValue = retrieveValueFromTemplate(
+                    this.element.style[keyword].toString() ||
+                        window
+                            .getComputedStyle(this.element)
+                            .getPropertyValue(kebabize(keyword)),
+                    template
+                );
+
+                const initialValue =
+                    typeof map[key] !== "undefined" ? map[key] : startValue;
+
+                map[key] = values[values.length - 1];
+
+                return {
+                    keyword,
+                    template,
+                    values: [initialValue, ...values],
+                    ...rest,
+                };
+            }
+        );
+
+        this.TESTCommandObjects = result;
+        console.log(map);
+        console.log(result);
+        return result;
+
+        // const result = this.history
+        //     .flatMap((s) => s.TESTcmsObjects)
+        //     .map(({ keyword, template, values, options }) => {
+        //         const key = `${keyword}_${template}`;
+        //         const startValue = retrieveValueFromTemplate(
+        //             this.element.style[keyword].toString() ||
+        //                 window
+        //                     .getComputedStyle(this.element)
+        //                     .getPropertyValue(kebabize(keyword)),
+        //             template
+        //         );
+        //         console.log(map[key], key);
+        //         const initialValue =
+        //             typeof map[key] !== "undefined" ? map[key] : startValue;
+        //         const newValues = [initialValue, ...values];
+        //         map[key] = values[values.length - 1];
+
+        //         return {
+        //             keyword,
+        //             template,
+        //             options,
+        //             values: newValues,
+        //         } as CommandObject;
+        //     });
+
+        // console.log(map);
+
+        // return result;
     }
 
     async play(
@@ -132,7 +205,6 @@ export class Scene {
     }
 
     async resume(): Promise<void> {
-        console.log(this.currentStep);
         this.currentStep.resume();
     }
 
@@ -142,15 +214,24 @@ export class Scene {
     }
 
     apply(cm: CommandObject, options?: EffectTiming): Scene {
-        return this.run((el) => new SimpleStep(el, cm, options));
+        return this.run(
+            // (el) => new SimpleStep(el, [cm], options)
+            (el) => new SimpleStep(el, this.addStartValue([cm]), options)
+        );
     }
 
     chain(cms: CommandObject[], options?: EffectTiming): Scene {
-        return this.run((el) => new ChainStep(el, cms, options));
+        return this.run(
+            // (el) => new ChainStep(el, cms, options)
+            (el) => new ChainStep(el, this.addStartValue(cms), options)
+        );
     }
 
     together(cms: CommandObject[], options?: EffectTiming): Scene {
-        return this.run((el) => new TogetherStep(el, cms, options));
+        return this.run(
+            // (el) => new TogetherStep(el, cms, options)
+            (el) => new TogetherStep(el, this.addStartValue(cms), options)
+        );
     }
 }
 
@@ -195,10 +276,10 @@ class TogetherStep extends BasicStep {
 class SimpleStep extends BasicStep {
     constructor(
         element: HTMLElement,
-        cm: CommandObject,
+        cms: CommandObject[],
         options?: EffectTiming
     ) {
-        super(element, [cm], options);
+        super(element, cms, options);
     }
 
     async play(): Promise<void> {

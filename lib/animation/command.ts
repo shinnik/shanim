@@ -91,22 +91,26 @@ export class AnimationCommand {
 
     private createKeyframes() {
         // to replay animation correctly
-        const startValue = retrieveValueFromTemplate(
-            this.findInitialCSSValue(this.element),
-            this.template
-        );
+        // const startValue = retrieveValueFromTemplate(
+        //     this.findInitialCSSValue(this.element),
+        //     this.template
+        // );
+
+        // console.log(
+        //     `START VALUE FOR ${this.keyword}_${this.template}: ${startValue}`
+        // );
 
         let keyframes = [];
 
         // add current style value as first keyframe
-        if (startValue !== this.values[0]) {
-            keyframes.push({
-                [this.keyword]: this.getKeyframe(startValue),
-            });
-        }
+        // if (startValue !== this.values[0]) {
+        //     keyframes.push({
+        //         [this.keyword]: this.getKeyframe(startValue),
+        //     });
+        // }
 
         keyframes = [
-            ...keyframes,
+            // ...keyframes,
             ...this.values.map((val) => ({
                 [this.keyword]: this.getKeyframe(val),
             })),
