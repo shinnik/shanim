@@ -116,6 +116,8 @@ export class AnimationCommand {
             })),
         ];
 
+        console.log(keyframes, "keyframes");
+
         return keyframes;
     }
 
