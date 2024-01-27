@@ -31,7 +31,7 @@ export class AnimationCommand {
     options: EffectTiming = AnimationCommand.defaultEffectTiming;
 
     constructor(
-        values: string | number | (string | number)[],
+        values: string[],
         keyword: Keyword,
         template: string,
         element: HTMLElement,
@@ -41,9 +41,7 @@ export class AnimationCommand {
         this.keyword = keyword;
         this.template = template;
         this.element = element;
-        this.values = Array.isArray(values)
-            ? values.map((v) => v.toString())
-            : [values.toString()];
+        this.values = values;
     }
 
     private findInitialCSSValue(element: HTMLElement): string {
@@ -116,7 +114,10 @@ export class AnimationCommand {
             })),
         ];
 
-        console.log(keyframes, "keyframes");
+        console.log(
+            keyframes,
+            `keyframes for ${this.keyword}_${this.template}`
+        );
 
         return keyframes;
     }

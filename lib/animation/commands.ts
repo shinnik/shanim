@@ -62,6 +62,8 @@ export function rotate(
 
 function normalizeValues(
     values: string | number | (string | number)[]
-): (string | number)[] {
-    return Array.isArray(values) ? values : [values];
+): string[] {
+    return Array.isArray(values)
+        ? values.map((v) => v.toString())
+        : [values.toString()];
 }

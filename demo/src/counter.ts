@@ -16,6 +16,7 @@ export function createAnimation(element: HTMLElement) {
                     easing: "ease-out",
                 }),
                 backgroundColor("#a9029e"),
+                backgroundColor("lightpink"),
             ])
             // возможно надо сразу запомнить первоначальные стили, чтобы было проще инитить
             // например, запомнить первый translate, первый rotate, брать значения первого кейфрейма, если есть, или прямо из элемента если нет

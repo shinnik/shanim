@@ -1,4 +1,6 @@
+import { getDeep } from "../utils/getDeep";
 import { kebabize } from "../utils/kebabize";
+import { setDeep } from "../utils/setDeep";
 import { retrieveValueFromTemplate } from "../utils/templateToRegexp";
 import { AnimationCommand } from "./command";
 import { CommandObject } from "./types";
@@ -87,10 +89,14 @@ export class Scene {
     private currentStep: BasicStep = null;
     private initialInlineElementStyles: string = null;
 
-    constructor(element: HTMLElement, steps: StepMeta[] = []) {
+    constructor(
+        element: HTMLElement,
+        history: BasicStep[] = [],
+        steps: StepMeta[] = []
+    ) {
         this.element = element;
         this.steps = steps;
-        this.history = this.createHistory(steps);
+        this.history = history;
         this.initialInlineElementStyles = element.getAttribute("style");
     }
 
@@ -149,20 +155,112 @@ export class Scene {
         this.currentStep.resume();
     }
 
-    /**
-     * на основании истории мы создаем полную картину того, как будет работать анимация
-     * и вычисляем начальное значение каждого нового CommandObject на основании этой полной картины
-     *
-     * но прикол в том, что история не нужна тогда в таком виде (как и шаги), так как логика "истории" вынесена на уровень сцены
-     */
+    private getNextKeyframeForCombinedStyles(
+        keyword: string,
+        template: string,
+        value: string,
+        map: Record<string, Record<string, string>>
+    ) {
+        // debugger;
+        const styleString = Object.entries(map[keyword] || {}).reduce(
+            (acc, [templ, val]) => {
+                if (templ === template || val === "") {
+                    return acc;
+                }
+                return `${acc} ${templ.replace("$", val)}`;
+            },
+            ""
+        );
+
+        // if (source === "") {
+        //     return styleString;
+        // }
+
+        // if (styleString === "") {
+        //     return this.template.replace("$", source);
+        // }
+
+        // const valueForThisTemplate = getDeep(map, [keyword, template]);
+
+        return `${styleString} ${template.replace("$", value)}`.trim();
+
+        // if (valueForThisTemplate === "") {
+        //     return `${styleString} ${template.replace("$", value)}`;
+        // } else {
+        //     return styleString.replace(valueForThisTemplate, value);
+        // }
+    }
+
+    //
+    private createKeyframe(
+        keyword: string,
+        template: string,
+        value: string,
+        map: Record<string, Record<string, string>>
+    ) {
+        const getStyleStringForKeyword = () => {
+            const templatesAndValues = Object.entries(map[keyword] || {});
+
+            return templatesAndValues
+                .reduce((acc, [template, value]) => {
+                    if (value === "") {
+                        return acc;
+                    }
+
+                    return `${acc} ${template.replace("$", value)}`;
+                }, "")
+                .trim();
+        };
+
+        if (value === "") {
+            return getStyleStringForKeyword();
+        }
+
+        if (["transform"].includes(keyword)) {
+            return this.getNextKeyframeForCombinedStyles(
+                keyword,
+                template,
+                value,
+                map
+            );
+        }
+
+        return template.replace("$", value);
+    }
+
+    public createKeyframes(steps: StepMeta[]) {
+        let currentSteps: StepMeta[] = [];
+
+        const map = {};
+
+        for (let step of steps) {
+            console.log("STEP: ", step.type);
+            console.log(
+                step.cms.map(({ keyword, template, values, options }) => {
+                    console.log(values, "values");
+                    return values.map((val) => {
+                        const keyframes = this.createKeyframe(
+                            keyword,
+                            template,
+                            val,
+                            map
+                        );
+                        setDeep(map, [keyword, template], val);
+                        return keyframes;
+                    });
+                })
+            );
+            console.log("MAP: ", map);
+        }
+    }
+
     private createMapWithLastValues(steps: StepMeta[]) {
-        const map: Record<string, string | number> = {}; // store last values for each keyword_template key
+        const map: Record<string, Record<string, string>> = {}; // store last values for each keyword_template key
 
         steps
             .flatMap((step) => step.cms)
             .forEach(({ keyword, template, values }) => {
-                const key = `${keyword}_${template}`;
-                map[key] = values[values.length - 1];
+                setDeep(map, [keyword, template], values[values.length - 1]);
             });
 
         return map;
@@ -176,20 +274,19 @@ export class Scene {
         return {
             ...step,
             cms: step.cms.map(({ keyword, template, values, ...rest }) => {
-                const key = `${keyword}_${template}`;
-
                 const startValue = retrieveValueFromTemplate(
-                    this.element.style[keyword].toString() ||
-                        window
-                            .getComputedStyle(this.element)
-                            .getPropertyValue(kebabize(keyword)),
+                    window
+                        .getComputedStyle(this.element)
+                        .getPropertyValue(kebabize(keyword)),
                     template
                 );
 
-                const initialValue =
-                    typeof map[key] !== "undefined" ? map[key] : startValue;
+                const val = getDeep(map, [keyword, template]);
 
-                map[key] = values[values.length - 1];
+                const initialValue =
+                    typeof val !== "undefined" ? val : startValue;
+
+                setDeep(map, [keyword, template], values[values.length - 1]);
 
                 return {
                     keyword,
@@ -201,14 +298,15 @@ export class Scene {
         };
     }
 
-    // Add start value for each command
-    private addStep(steps: StepMeta[], stepToAdd: StepMeta): StepMeta[] {
-        const adjustedStep = this.justifyStep(stepToAdd, steps);
-        return [...steps, adjustedStep];
+    private createNextScene(nextStep: StepMeta) {
+        const steps = [...this.steps, this.justifyStep(nextStep, this.steps)];
+        const history = this.createHistory(steps);
+        this.createKeyframes(steps);
+        return new Scene(this.element, history, steps);
     }
 
     run(nextStep: StepMeta): Scene {
-        return new Scene(this.element, this.addStep(this.steps, nextStep));
+        return this.createNextScene(nextStep);
     }
 
     apply(cm: CommandObject, options?: EffectTiming): Scene {
