@@ -33,6 +33,7 @@ abstract class BasicStep {
                     data.keyword,
                     data.template,
                     element,
+                    data.keyframes,
                     data.options
                 )
         );
@@ -64,10 +65,6 @@ abstract class BasicStep {
                 this.release.bind(this, animation)
             )
         );
-
-        animation.finished.then((anim) => {
-            anim.commitStyles();
-        });
 
         return animation;
     }
@@ -161,7 +158,6 @@ export class Scene {
         value: string,
         map: Record<string, Record<string, string>>
     ) {
-        // debugger;
         const styleString = Object.entries(map[keyword] || {}).reduce(
             (acc, [templ, val]) => {
                 if (templ === template || val === "") {
@@ -172,26 +168,9 @@ export class Scene {
             ""
         );
 
-        // if (source === "") {
-        //     return styleString;
-        // }
-
-        // if (styleString === "") {
-        //     return this.template.replace("$", source);
-        // }
-
-        // const valueForThisTemplate = getDeep(map, [keyword, template]);
-
         return `${styleString} ${template.replace("$", value)}`.trim();
-
-        // if (valueForThisTemplate === "") {
-        //     return `${styleString} ${template.replace("$", value)}`;
-        // } else {
-        //     return styleString.replace(valueForThisTemplate, value);
-        // }
     }
 
-    //
     private createKeyframe(
         keyword: string,
         template: string,
@@ -231,29 +210,37 @@ export class Scene {
     public createKeyframes(steps: StepMeta[]) {
         let currentSteps: StepMeta[] = [];
 
-        const map = {};
+        const state = {};
 
         for (let step of steps) {
             console.log("STEP: ", step.type);
-            console.log(
-                step.cms.map(({ keyword, template, values, options }) => {
+            currentSteps.push({
+                ...step,
+                cms: step.cms.map(({ keyword, template, values, options }) => {
                     console.log(values, "values");
-                    return values.map((val) => {
-                        const keyframes = this.createKeyframe(
+                    // просто связать value и кейфрейм в отдельном классе?
+                    const keyframes = values.map((val) => {
+                        const keyframe = this.createKeyframe(
                             keyword,
                             template,
                             val,
-                            map
+                            state
                         );
-                        setDeep(map, [keyword, template], val);
-                        return keyframes;
+                        setDeep(state, [keyword, template], val);
+                        return { [keyword]: keyframe };
                     });
-                })
-            );
-            console.log("MAP: ", map);
+
+                    return { keyword, template, values, options, keyframes };
+                }),
+            });
+            console.log("STEPS: ", currentSteps);
+            console.log("STATE: ", state);
         }
+
+        return currentSteps;
     }
 
+    /** Calculate current state */
     private createMapWithLastValues(steps: StepMeta[]) {
         const map: Record<string, Record<string, string>> = {}; // store last values for each keyword_template key
 
@@ -268,30 +255,28 @@ export class Scene {
 
     // Add start value to step, based on previous steps
     private justifyStep(step: StepMeta, steps: StepMeta[]) {
-        const referenceMap = this.createMapWithLastValues(steps);
-        const map = { ...referenceMap };
+        const state = this.createMapWithLastValues(steps);
+        const currentState = { ...state };
 
         return {
             ...step,
             cms: step.cms.map(({ keyword, template, values, ...rest }) => {
-                const startValue = retrieveValueFromTemplate(
-                    window
-                        .getComputedStyle(this.element)
-                        .getPropertyValue(kebabize(keyword)),
-                    template
-                );
-
-                const val = getDeep(map, [keyword, template]);
-
-                const initialValue =
-                    typeof val !== "undefined" ? val : startValue;
-
-                setDeep(map, [keyword, template], values[values.length - 1]);
+                const keyframes = values.map((val) => {
+                    const keyframe = this.createKeyframe(
+                        keyword,
+                        template,
+                        val,
+                        currentState
+                    );
+                    setDeep(currentState, [keyword, template], val);
+                    return { [keyword]: keyframe };
+                });
 
                 return {
                     keyword,
                     template,
-                    values: [initialValue, ...values],
+                    values,
+                    keyframes,
                     ...rest,
                 };
             }),
@@ -301,7 +286,6 @@ export class Scene {
     private createNextScene(nextStep: StepMeta) {
         const steps = [...this.steps, this.justifyStep(nextStep, this.steps)];
         const history = this.createHistory(steps);
-        this.createKeyframes(steps);
         return new Scene(this.element, history, steps);
     }
 

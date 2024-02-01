@@ -16,6 +16,8 @@ export type Keyword = Exclude<
 /** Abstraction for command creation */
 export type CommandObject = {
     values: string[];
+    /** TEMPORARY FOR TEST */
+    keyframes?: Keyframe[];
     keyword: Keyword;
     template: string;
     options?: AllowedEffectTiming;

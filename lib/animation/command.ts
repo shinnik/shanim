@@ -35,113 +35,25 @@ export class AnimationCommand {
         keyword: Keyword,
         template: string,
         element: HTMLElement,
+        keyframes: Keyframe[],
         options?: AllowedEffectTiming
     ) {
         this.options = options;
         this.keyword = keyword;
+        this.keyframes = keyframes;
         this.template = template;
         this.element = element;
         this.values = values;
     }
 
-    private findInitialCSSValue(element: HTMLElement): string {
-        return (
-            element.style[this.keyword].toString() ||
-            window
-                .getComputedStyle(element)
-                .getPropertyValue(kebabize(this.keyword))
-        );
-    }
-
-    private getNextKeyframeForCombinedStyles(
-        element: HTMLElement,
-        source: string
-    ) {
-        const styleString = element.style[this.keyword].toString();
-
-        if (source === "") {
-            return styleString;
-        }
-
-        if (styleString === "") {
-            return this.template.replace("$", source);
-        }
-
-        const valueForThisTemplate = retrieveValueFromTemplate(
-            styleString,
-            this.template
-        );
-
-        if (valueForThisTemplate === "") {
-            return `${styleString} ${this.template.replace("$", source)}`;
-        } else {
-            return styleString.replace(valueForThisTemplate, source);
-        }
-    }
-
-    private getKeyframe(source: string) {
-        if (COMBINE_KEYWORDS.includes(this.keyword)) {
-            return this.getNextKeyframeForCombinedStyles(this.element, source);
-        }
-
-        return this.template.replace("$", source);
-    }
-
-    private createKeyframes() {
-        // to replay animation correctly
-        // const startValue = retrieveValueFromTemplate(
-        //     this.findInitialCSSValue(this.element),
-        //     this.template
-        // );
-
-        // console.log(
-        //     `START VALUE FOR ${this.keyword}_${this.template}: ${startValue}`
-        // );
-
-        let keyframes = [];
-
-        // add current style value as first keyframe
-        // if (startValue !== this.values[0]) {
-        //     keyframes.push({
-        //         [this.keyword]: this.getKeyframe(startValue),
-        //     });
-        // }
-
-        keyframes = [
-            // ...keyframes,
-            ...this.values.map((val) => ({
-                [this.keyword]: this.getKeyframe(val),
-            })),
-        ];
-
-        console.log(
-            keyframes,
-            `keyframes for ${this.keyword}_${this.template}`
-        );
-
-        return keyframes;
-    }
-
-    private getKeyframes(): Keyframe[] {
-        if (this.keyframes.length === 0) {
-            this.keyframes = this.createKeyframes();
-        }
-
-        return this.keyframes;
-    }
-
-    getInfo(): { keyword: Keyword; template: string; keyframes: Keyframe[] } {
-        return {
-            keyword: this.keyword,
-            keyframes: this.keyframes,
-            template: this.template,
-        };
-    }
-
     execute(overrideOptions?: EffectTiming): Animation {
         /** animation's own options prevail over common options
          * and both of them prevail over default settings */
-        return this.element.animate(this.getKeyframes(), {
+        console.log(
+            this.keyframes,
+            `keyframes for ${this.keyword}_${this.template}`
+        );
+        return this.element.animate(this.keyframes, {
             ...AnimationCommand.defaultEffectTiming,
             ...overrideOptions,
             ...this.options,
