@@ -1,6 +1,9 @@
-import { beforeAll, expect, test, it, describe } from "vitest";
+import { expect, it, describe } from "vitest";
 
-import { templateToRegexp } from "../../lib/utils/templateToRegexp";
+import {
+    retrieveValueFromTemplate,
+    templateToRegexp,
+} from "../../lib/utils/templateToRegexp";
 
 describe("templateToRegexp util", () => {
     it("works as expected", () => {
@@ -35,5 +38,22 @@ describe("templateToRegexp util", () => {
 
         expect(dollar).toBe("0px");
         expect(dollar1).toBe("-80%");
+    });
+});
+
+describe("retrieveValueFromTemplate", () => {
+    it("retrieves value", () => {
+        expect(
+            retrieveValueFromTemplate(
+                "translate(0px, -80%) rotate(360deg)",
+                "translate($)"
+            )
+        ).toBe("0px, -80%");
+    });
+
+    it("returns empty string if a template doesn't have a match", () => {
+        expect(retrieveValueFromTemplate("bad example", "translate($)")).toBe(
+            ""
+        );
     });
 });

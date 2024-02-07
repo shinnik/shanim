@@ -27,6 +27,7 @@ document.addEventListener("keydown", function (event) {
         scene.pause();
     } else if (event.key === "g") {
         console.log(scene);
+        window._SCENE = scene;
     } else if (event.key === "t") {
         createAnimation(
             document.querySelector<HTMLButtonElement>("#counter")

@@ -8,6 +8,7 @@ const COMBINE_KEYWORDS = ["transform"];
 export class AnimationCommand {
     private keyword: Keyword;
     private template: string;
+    private element: HTMLElement;
 
     private keyframes: Keyframe[] = [];
 
@@ -30,102 +31,25 @@ export class AnimationCommand {
     options: EffectTiming = AnimationCommand.defaultEffectTiming;
 
     constructor(
-        values: string | number | (string | number)[],
+        values: string[],
         keyword: Keyword,
         template: string,
+        element: HTMLElement,
+        keyframes: Keyframe[],
         options?: AllowedEffectTiming
     ) {
         this.options = options;
         this.keyword = keyword;
+        this.keyframes = keyframes;
         this.template = template;
-        this.values = Array.isArray(values)
-            ? values.map((v) => v.toString())
-            : [values.toString()];
+        this.element = element;
+        this.values = values;
     }
 
-    private findInitialCSSValue(element: HTMLElement): string {
-        return (
-            element.style[this.keyword].toString() ||
-            window
-                .getComputedStyle(element)
-                .getPropertyValue(kebabize(this.keyword))
-        );
-    }
-
-    private getNextKeyframeForCombinedStyles(
-        element: HTMLElement,
-        source: string
-    ) {
-        const styleString = element.style[this.keyword].toString();
-        console.log(this.template, source, styleString);
-
-        if (source === "") {
-            return styleString;
-        }
-
-        if (styleString === "") {
-            return this.template.replace("$", source);
-        }
-
-        const valueForThisTemplate = retrieveValueFromTemplate(
-            styleString,
-            this.template
-        );
-
-        if (valueForThisTemplate === "") {
-            return `${styleString} ${this.template.replace("$", source)}`;
-        } else {
-            return styleString.replace(valueForThisTemplate, source);
-        }
-    }
-
-    private getKeyframe(element: HTMLElement, source: string) {
-        if (COMBINE_KEYWORDS.includes(this.keyword)) {
-            return this.getNextKeyframeForCombinedStyles(element, source);
-        }
-
-        return this.template.replace("$", source);
-    }
-
-    private createKeyframes(element: HTMLElement) {
-        // to replay animation correctly
-        const startValue = retrieveValueFromTemplate(
-            this.findInitialCSSValue(element),
-            this.template
-        );
-
-        let keyframes = [];
-
-        // add current style value as first keyframe
-        if (startValue !== this.values[0]) {
-            keyframes.push({
-                [this.keyword]: this.getKeyframe(element, startValue),
-            });
-        }
-
-        keyframes = [
-            ...keyframes,
-            ...this.values.map((val) => ({
-                [this.keyword]: this.getKeyframe(element, val),
-            })),
-        ];
-
-        return keyframes;
-    }
-
-    private getKeyframes(element: HTMLElement): Keyframe[] {
-        if (this.keyframes.length === 0) {
-            this.keyframes = this.createKeyframes(element);
-        }
-
-        console.log(this.keyframes, this.template);
-        return this.keyframes;
-    }
-
-    execute(element: HTMLElement, overrideOptions?: EffectTiming): Animation {
+    execute(overrideOptions?: EffectTiming): Animation {
         /** animation's own options prevail over common options
          * and both of them prevail over default settings */
-        return element.animate(this.getKeyframes(element), {
+        return this.element.animate(this.keyframes, {
             ...AnimationCommand.defaultEffectTiming,
             ...overrideOptions,
             ...this.options,
