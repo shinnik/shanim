@@ -278,7 +278,6 @@ export class Scene {
 
     private createNextScene(nextStep: StepMeta) {
         const steps = this.addStep(nextStep, this.steps);
-        console.log(this.addStep(nextStep, this.steps));
         const history = this.createHistory(steps);
         return new Scene(this.element, history, steps);
     }
