@@ -6,7 +6,6 @@ import {
     translate,
 } from "../../lib/animation/commands";
 import { createScene } from "../../lib/animation/engine";
-import { fontSize } from "../../lib/animation/commands";
 
 export function createAnimation(element: HTMLElement) {
     return (
