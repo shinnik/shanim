@@ -13,6 +13,11 @@ export type Keyword = Exclude<
     "length" | "parentRule"
 >;
 
+export type ShanimOptions = {
+    /** Use to apply first keyframe immediately */
+    init: boolean;
+};
+
 /** Abstraction for command creation */
 export type CommandObject = {
     values: string[];
@@ -21,4 +26,5 @@ export type CommandObject = {
     keyword: Keyword;
     template: string;
     options?: AllowedEffectTiming;
+    shanimOptions?: ShanimOptions;
 };

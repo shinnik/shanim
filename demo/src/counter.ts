@@ -6,6 +6,7 @@ import {
     translate,
 } from "../../lib/animation/commands";
 import { createScene } from "../../lib/animation/engine";
+import { fontSize } from "../../lib/animation/commands";
 
 export function createAnimation(element: HTMLElement) {
     return (
@@ -42,5 +43,7 @@ export function createAnimation(element: HTMLElement) {
                 fade(0),
                 fade(1),
             ])
+            .init([fade(0.1)])
+            .init([fontSize(5)])
     );
 }

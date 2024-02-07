@@ -3,10 +3,10 @@ import { kebabize } from "../utils/kebabize";
 import { setDeep } from "../utils/setDeep";
 import { retrieveValueFromTemplate } from "../utils/templateToRegexp";
 import { AnimationCommand } from "./command";
-import { CommandObject } from "./types";
+import { CommandObject, ShanimOptions } from "./types";
 
 type StepMeta = {
-    type: "simple" | "chain" | "together";
+    type: "simple" | "chain" | "together" | "init";
     cms: CommandObject[];
     options?: EffectTiming;
 };
@@ -80,8 +80,9 @@ abstract class BasicStep {
 
 /** View for client code */
 export class Scene {
-    protected element: HTMLElement;
+    private element: HTMLElement;
     private history: BasicStep[];
+    private initSteps: BasicStep[];
     private steps: StepMeta[];
     private currentStep: BasicStep = null;
     private initialInlineElementStyles: string = null;
@@ -93,8 +94,15 @@ export class Scene {
     ) {
         this.element = element;
         this.steps = steps;
-        this.history = history;
+        this.history = history.filter(
+            (_, index) => steps[index].type !== "init"
+        );
+        this.initSteps = history.filter(
+            (_, index) => steps[index].type === "init"
+        );
         this.initialInlineElementStyles = element.getAttribute("style");
+
+        this.playInit();
     }
 
     private createHistory(steps: StepMeta[]) {
@@ -103,6 +111,7 @@ export class Scene {
                 case "chain":
                     return new ChainStep(this.element, cms, options);
                 case "together":
+                case "init":
                     return new TogetherStep(this.element, cms, options);
                 case "simple":
                     return new SimpleStep(this.element, cms, options);
@@ -127,6 +136,11 @@ export class Scene {
                   this.initialInlineElementStyles
               )
             : this.element.removeAttribute("style");
+    }
+
+    private async playInit() {
+        this.reset();
+        this.initSteps.forEach((step) => step.play());
     }
 
     async play(
@@ -177,24 +191,6 @@ export class Scene {
         value: string,
         map: Record<string, Record<string, string>>
     ) {
-        const getStyleStringForKeyword = () => {
-            const templatesAndValues = Object.entries(map[keyword] || {});
-
-            return templatesAndValues
-                .reduce((acc, [template, value]) => {
-                    if (value === "") {
-                        return acc;
-                    }
-
-                    return `${acc} ${template.replace("$", value)}`;
-                }, "")
-                .trim();
-        };
-
-        if (value === "") {
-            return getStyleStringForKeyword();
-        }
-
         if (["transform"].includes(keyword)) {
             return this.getNextKeyframeForCombinedStyles(
                 keyword,
@@ -207,55 +203,22 @@ export class Scene {
         return template.replace("$", value);
     }
 
-    public createKeyframes(steps: StepMeta[]) {
-        let currentSteps: StepMeta[] = [];
-
-        const state = {};
-
-        for (let step of steps) {
-            console.log("STEP: ", step.type);
-            currentSteps.push({
-                ...step,
-                cms: step.cms.map(({ keyword, template, values, options }) => {
-                    console.log(values, "values");
-                    // просто связать value и кейфрейм в отдельном классе?
-                    const keyframes = values.map((val) => {
-                        const keyframe = this.createKeyframe(
-                            keyword,
-                            template,
-                            val,
-                            state
-                        );
-                        setDeep(state, [keyword, template], val);
-                        return { [keyword]: keyframe };
-                    });
-
-                    return { keyword, template, values, options, keyframes };
-                }),
-            });
-            console.log("STEPS: ", currentSteps);
-            console.log("STATE: ", state);
-        }
-
-        return currentSteps;
-    }
-
-    /** Calculate current state */
-    private createMapWithLastValues(steps: StepMeta[]) {
+    private getCombinedValuesMap(steps: StepMeta[]) {
         const map: Record<string, Record<string, string>> = {}; // store last values for each keyword_template key
 
         steps
             .flatMap((step) => step.cms)
+            .filter((cm) => ["transform"].includes(cm.keyword))
             .forEach(({ keyword, template, values }) => {
-                setDeep(map, [keyword, template], values[values.length - 1]);
+                setDeep(map, [keyword, template], values[0]);
             });
 
         return map;
     }
 
-    // Add start value to step, based on previous steps
+    // UPD: just calculate keyframes
     private justifyStep(step: StepMeta, steps: StepMeta[]) {
-        const state = this.createMapWithLastValues(steps);
+        const state = this.getCombinedValuesMap(steps);
         const currentState = { ...state };
 
         return {
@@ -283,8 +246,42 @@ export class Scene {
         };
     }
 
+    private addStep(nextStep: StepMeta, steps: StepMeta[]) {
+        const copySteps = [...steps];
+
+        if (nextStep.type === "init") {
+            let result = [];
+
+            if (copySteps[0].type === "init") {
+                // merge init steps
+                result.push(
+                    this.justifyStep(
+                        {
+                            ...nextStep,
+                            cms: [...nextStep.cms, ...copySteps[0].cms],
+                        },
+                        []
+                    )
+                );
+                // remove init step, because we don't need it anymore
+                copySteps.shift();
+            } else {
+                result.push(this.justifyStep(nextStep, []));
+            }
+
+            for (let i = 0; i < copySteps.length; i++) {
+                result = [...result, this.justifyStep(copySteps[i], result)];
+            }
+
+            return result;
+        }
+
+        return [...steps, this.justifyStep(nextStep, steps)];
+    }
+
     private createNextScene(nextStep: StepMeta) {
-        const steps = [...this.steps, this.justifyStep(nextStep, this.steps)];
+        const steps = this.addStep(nextStep, this.steps);
+        console.log(this.addStep(nextStep, this.steps));
         const history = this.createHistory(steps);
         return new Scene(this.element, history, steps);
     }
@@ -293,27 +290,32 @@ export class Scene {
         return this.createNextScene(nextStep);
     }
 
-    apply(cm: CommandObject, options?: EffectTiming): Scene {
+    apply(cm: CommandObject): Scene {
         return this.run({
             type: "simple",
             cms: [cm],
-            options,
         });
     }
 
-    chain(cms: CommandObject[], options?: EffectTiming): Scene {
+    chain(cms: CommandObject[]): Scene {
         return this.run({
             type: "chain",
             cms,
-            options,
         });
     }
 
-    together(cms: CommandObject[], options?: EffectTiming): Scene {
+    together(cms: CommandObject[]): Scene {
         return this.run({
             type: "together",
             cms,
-            options,
+        });
+    }
+
+    init(cms: CommandObject[]): Scene {
+        return this.run({
+            type: "init",
+            cms,
+            options: { duration: 0 }, // apply immediately
         });
     }
 }
@@ -325,7 +327,6 @@ class ChainStep extends BasicStep {
         options?: EffectTiming
     ) {
         super(element, cms, options);
-        window["animationsInPlay1"] = this.animationsInPlay;
     }
 
     async play(): Promise<void> {
@@ -344,7 +345,6 @@ class TogetherStep extends BasicStep {
         options?: EffectTiming
     ) {
         super(element, cms, options);
-        window["animationsInPlay2"] = this.animationsInPlay;
     }
 
     async play(): Promise<void> {
