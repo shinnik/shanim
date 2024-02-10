@@ -249,7 +249,7 @@ export class Scene {
         if (nextStep.type === "init") {
             let result = [];
 
-            if (copySteps[0].type === "init") {
+            if (copySteps[0]?.type === "init") {
                 // merge init steps
                 result.push(
                     this.justifyStep(

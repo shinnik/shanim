@@ -49,6 +49,7 @@ export class AnimationCommand {
     execute(overrideOptions?: EffectTiming): Animation {
         /** animation's own options prevail over common options
          * and both of them prevail over default settings */
+        console.log(this.keyframes, this.options);
         return this.element.animate(this.keyframes, {
             ...AnimationCommand.defaultEffectTiming,
             ...overrideOptions,
