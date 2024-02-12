@@ -5,11 +5,11 @@ import {
     rotate,
     translate,
 } from "../../lib/animation/commands";
-import { createScene } from "../../lib/animation/engine";
+import { animate } from "../../lib/animation/engine";
 
 export function createAnimation(element: HTMLElement) {
     return (
-        createScene(element)
+        animate(element)
             .together([
                 fontSize([10, 20, 50, 30], {
                     duration: 300,
