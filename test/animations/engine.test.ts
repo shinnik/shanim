@@ -1,6 +1,6 @@
 import { beforeAll, expect, it, describe, vi } from "vitest";
 
-import { createScene, Scene } from "../../lib/animation/engine";
+import { animate, Scene } from "../../lib/animation/engine";
 import { mockWithDispose } from "../helpers/mockWithDispose";
 
 describe("Scene", () => {
@@ -10,13 +10,13 @@ describe("Scene", () => {
         div.getAnimations = vi.fn(() => []);
     });
     it("can be created", () => {
-        expect(createScene(div) instanceof Scene).toBe(true);
+        expect(animate(div) instanceof Scene).toBe(true);
     });
 
     it("plays initialization step", () => {
         using mock = mockWithDispose(Scene, "playInit");
 
-        const scene = createScene(div);
+        const scene = animate(div);
         expect(scene["playInit"]).toBeCalled();
     });
 });

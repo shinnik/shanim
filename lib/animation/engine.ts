@@ -348,7 +348,7 @@ class TogetherStep extends BasicStep {
             this.commands.map(
                 (command) => this.execute(command, this.options).finished
             )
-        );
+        ).catch(() => {}); // TODO: fix user aborted request error
     }
 }
 
@@ -366,6 +366,6 @@ class SimpleStep extends BasicStep {
     }
 }
 
-export function createScene(element: HTMLElement) {
+export function animate(element: HTMLElement) {
     return new Scene(element);
 }
