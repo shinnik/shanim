@@ -7,7 +7,7 @@ Initally made for my own projects :)
 
 # API
 
-`animate` function wraps up element and creates start animation `Scene`. `Scene` provides a declarative API to manipulate animations
+`animate` function wraps up the element and creates the start animation `Scene`. `Scene` provides a declarative API to manipulate animations
 
 - `chain` method of `Scene` allows chaining animation step by step.
 - `together` method is for launching animations simultaneously.
