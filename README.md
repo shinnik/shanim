@@ -6,7 +6,7 @@ Small wrapper for Web Animations API to animate HTMLElements with more ease.
 
 # API
 
-`animate` function wraps up element and creates start animation `Scene`. `Scene` provides a user with a declarative API to manipulate animation
+`animate` function wraps up element and creates start animation `Scene`. `Scene` provides a declarative API to manipulate animations
 
 - `chain` method of `Scene` allows chaining animation step by step.
 - `together` method is for launching animations simultaneously.
