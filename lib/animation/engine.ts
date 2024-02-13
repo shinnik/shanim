@@ -25,14 +25,7 @@ abstract class BasicStep {
         this.options = options;
         this.commands = commands.map(
             (data) =>
-                new AnimationCommand(
-                    data.values,
-                    data.keyword,
-                    data.template,
-                    element,
-                    data.keyframes,
-                    data.options
-                )
+                new AnimationCommand(element, data.keyframes, data.options)
         );
     }
 

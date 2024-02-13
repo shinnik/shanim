@@ -1,15 +1,7 @@
-import { kebabize } from "../utils/kebabize";
-import { retrieveValueFromTemplate } from "../utils/templateToRegexp";
-import { AllowedEffectTiming, Keyword } from "./types";
-
-// Keywords that should be combined (e.g transform: "translateX(10px) rotate(20deg)")
-const COMBINE_KEYWORDS = ["transform"];
+import { AllowedEffectTiming } from "./types";
 
 export class AnimationCommand {
-    private keyword: Keyword;
-    private template: string;
     private element: HTMLElement;
-
     private keyframes: Keyframe[] = [];
 
     static defaultEffectTiming: AllowedEffectTiming = {
@@ -27,29 +19,21 @@ export class AnimationCommand {
         fill: "both",
     };
 
-    values: string[];
     options: EffectTiming = AnimationCommand.defaultEffectTiming;
 
     constructor(
-        values: string[],
-        keyword: Keyword,
-        template: string,
         element: HTMLElement,
         keyframes: Keyframe[],
         options?: AllowedEffectTiming
     ) {
         this.options = options;
-        this.keyword = keyword;
         this.keyframes = keyframes;
-        this.template = template;
         this.element = element;
-        this.values = values;
     }
 
     execute(overrideOptions?: EffectTiming): Animation {
         /** animation's own options prevail over common options
          * and both of them prevail over default settings */
-        console.log(this.keyframes, this.options);
         return this.element.animate(this.keyframes, {
             ...AnimationCommand.defaultEffectTiming,
             ...overrideOptions,
