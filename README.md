@@ -1,5 +1,6 @@
 # About
-Small wrapper for Web Animations API to animate HTMLElements with more ease.
+Small wrapper for Web Animations API to animate HTMLElements with more ease. 
+Initally made for my own projects :)
 
 # Install
 `npm install shanim`
