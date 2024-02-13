@@ -20,7 +20,7 @@ import { animate, fade, backgroundColor } from 'shanim';
 const element = document.querySelector('div.my-element')
 const scene = animate(element)
 
-scene.chain([backgroundColor("lightpink", { duration: 1000 }),fade(0),fade(1)]).play()
+scene.chain([backgroundColor("lightpink", { duration: 1000 }), fade(0), fade(1)]).play()
 ```
 
 ![The result](https://i.ibb.co/30H9hXW/Screen-Recording2024-02-14at00-45-32-ezgif-com-video-to-gif-converter.gif)
